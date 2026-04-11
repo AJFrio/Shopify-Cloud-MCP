@@ -131,26 +131,365 @@ export function registerShopifyTools(
       inputSchema: {
         id: z.string(),
         title: z.string().optional(),
+        description: z.string().optional(),
         status: z.enum(["ACTIVE", "ARCHIVED", "DRAFT"]).optional(),
+        tags: z.array(z.string()).optional(),
+        collections: z
+          .object({
+            add: z.array(z.string()).optional(),
+            remove: z.array(z.string()).optional(),
+          })
+          .optional(),
+        variants: z
+          .object({
+            create: z
+              .array(
+                z.object({
+                  optionValues: z
+                    .array(
+                      z.object({
+                        optionName: z.string(),
+                        name: z.string(),
+                      }),
+                    )
+                    .optional(),
+                  price: z.string().optional(),
+                  inventoryLevels: z
+                    .array(
+                      z.object({
+                        locationId: z.string(),
+                        quantity: z.number().int(),
+                      }),
+                    )
+                    .optional(),
+                }),
+              )
+              .optional(),
+            update: z
+              .array(
+                z.object({
+                  id: z.string(),
+                  price: z.string().optional(),
+                  inventoryLevels: z
+                    .array(
+                      z.object({
+                        locationId: z.string(),
+                        quantity: z.number().int(),
+                      }),
+                    )
+                    .optional(),
+                }),
+              )
+              .optional(),
+          })
+          .optional(),
+        metadata: z
+          .array(
+            z.object({
+              namespace: z.string(),
+              key: z.string(),
+              value: z.string(),
+              type: z.string(),
+            }),
+          )
+          .optional(),
       },
     },
     async (input) => {
       assertPermission(requireProps(host).permissions, "products");
+      const hasVariantInventory =
+        Boolean(
+          input.variants?.create?.some(
+            (variant: { inventoryLevels?: unknown[] }) =>
+              (variant.inventoryLevels?.length ?? 0) > 0,
+          ),
+        ) ||
+        Boolean(
+          input.variants?.update?.some(
+            (variant: { inventoryLevels?: unknown[] }) =>
+              (variant.inventoryLevels?.length ?? 0) > 0,
+          ),
+        );
+      if (
+        (input.collections?.add?.length ?? 0) > 0 ||
+        (input.collections?.remove?.length ?? 0) > 0
+      ) {
+        assertPermission(requireProps(host).permissions, "collections");
+      }
+      if (hasVariantInventory) {
+        assertPermission(requireProps(host).permissions, "inventory");
+      }
+      if (input.metadata !== undefined) {
+        assertPermission(requireProps(host).permissions, "metafields");
+      }
+
+      const response: Record<string, unknown> = {};
+      let didWork = false;
+
       const product: Record<string, unknown> = { id: input.id };
-      if (input.title) product.title = input.title;
-      if (input.status) product.status = input.status;
-      const data = await gql<{ productUpdate: { product?: unknown; userErrors: unknown[] } }>(
-        host,
-        `#graphql
-        mutation UpdateProduct($product: ProductUpdateInput!) {
-          productUpdate(product: $product) {
-            product { id title status }
-            userErrors { field message }
-          }
-        }`,
-        { product },
+      if (input.title !== undefined) product.title = input.title;
+      if (input.description !== undefined) {
+        product.descriptionHtml = input.description;
+      }
+      if (input.status !== undefined) product.status = input.status;
+      if (input.tags !== undefined) product.tags = input.tags;
+
+      if (Object.keys(product).length > 1) {
+        didWork = true;
+        const data = await gql<{
+          productUpdate: { product?: unknown; userErrors: unknown[] };
+        }>(
+          host,
+          `#graphql
+          mutation UpdateProduct($product: ProductUpdateInput!) {
+            productUpdate(product: $product) {
+              product { id title status tags descriptionHtml }
+              userErrors { field message }
+            }
+          }`,
+          { product },
+        );
+        response.productUpdate = data.productUpdate;
+      }
+
+      if ((input.collections?.add?.length ?? 0) > 0) {
+        didWork = true;
+        const addResults = [];
+        for (const collectionId of input.collections.add) {
+          const data = await gql<{
+            collectionAddProducts: { userErrors: unknown[] };
+          }>(
+            host,
+            `#graphql
+            mutation AddProductToCollection($id: ID!, $productIds: [ID!]!) {
+              collectionAddProducts(id: $id, productIds: $productIds) {
+                userErrors { field message }
+              }
+            }`,
+            { id: collectionId, productIds: [input.id] },
+          );
+          addResults.push({ collectionId, ...data.collectionAddProducts });
+        }
+        response.collectionsAdded = addResults;
+      }
+
+      if ((input.collections?.remove?.length ?? 0) > 0) {
+        didWork = true;
+        const removeResults = [];
+        for (const collectionId of input.collections.remove) {
+          const data = await gql<{
+            collectionRemoveProducts: { userErrors: unknown[] };
+          }>(
+            host,
+            `#graphql
+            mutation RemoveProductFromCollection($id: ID!, $productIds: [ID!]!) {
+              collectionRemoveProducts(id: $id, productIds: $productIds) {
+                userErrors { field message }
+              }
+            }`,
+            { id: collectionId, productIds: [input.id] },
+          );
+          removeResults.push({ collectionId, ...data.collectionRemoveProducts });
+        }
+        response.collectionsRemoved = removeResults;
+      }
+
+      if ((input.variants?.create?.length ?? 0) > 0) {
+        didWork = true;
+        const variants = input.variants.create.map(
+          (variant: {
+            optionValues?: { optionName: string; name: string }[];
+            price?: string;
+            inventoryLevels?: { locationId: string; quantity: number }[];
+          }) => {
+            const payload: Record<string, unknown> = {};
+            if (variant.optionValues !== undefined) {
+              payload.optionValues = variant.optionValues;
+            }
+            if (variant.price !== undefined) payload.price = variant.price;
+            if ((variant.inventoryLevels?.length ?? 0) > 0) {
+              payload.inventoryQuantities = variant.inventoryLevels.map(
+                (inventoryLevel) => ({
+                  locationId: inventoryLevel.locationId,
+                  availableQuantity: Math.max(0, inventoryLevel.quantity),
+                }),
+              );
+            }
+            return payload;
+          },
+        );
+        const data = await gql<{
+          productVariantsBulkCreate: {
+            productVariants?: unknown[];
+            userErrors: unknown[];
+          };
+        }>(
+          host,
+          `#graphql
+          mutation ProductVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkCreate(productId: $productId, variants: $variants) {
+              productVariants { id price inventoryItem { id } }
+              userErrors { field message }
+            }
+          }`,
+          { productId: input.id, variants },
+        );
+        response.variantsCreated = data.productVariantsBulkCreate;
+      }
+
+      const variantUpdatesNeedingInventory = input.variants?.update?.filter(
+        (variant: { inventoryLevels?: unknown[] }) =>
+          (variant.inventoryLevels?.length ?? 0) > 0,
       );
-      return jsonResult(data.productUpdate);
+      const variantPriceUpdates = input.variants?.update
+        ?.map((variant: { id: string; price?: string }) => {
+          const payload: Record<string, unknown> = { id: variant.id };
+          if (variant.price !== undefined) payload.price = variant.price;
+          return payload;
+        })
+        .filter((variant) => Object.keys(variant).length > 1);
+
+      if ((variantPriceUpdates?.length ?? 0) > 0) {
+        didWork = true;
+        const data = await gql<{
+          productVariantsBulkUpdate: {
+            productVariants?: unknown[];
+            userErrors: unknown[];
+          };
+        }>(
+          host,
+          `#graphql
+          mutation ProductVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+              productVariants { id price inventoryItem { id } }
+              userErrors { field message }
+            }
+          }`,
+          { productId: input.id, variants: variantPriceUpdates },
+        );
+        response.variantsUpdated = data.productVariantsBulkUpdate;
+      }
+
+      if ((variantUpdatesNeedingInventory?.length ?? 0) > 0) {
+        didWork = true;
+        const variantIds = variantUpdatesNeedingInventory.map(
+          (variant: { id: string }) => variant.id,
+        );
+        const variantsData = await gql<{
+          nodes: Array<{ id: string; inventoryItem?: { id: string } } | null>;
+        }>(
+          host,
+          `#graphql
+          query VariantInventoryItems($ids: [ID!]!) {
+            nodes(ids: $ids) {
+              ... on ProductVariant {
+                id
+                inventoryItem { id }
+              }
+            }
+          }`,
+          { ids: variantIds },
+        );
+        const inventoryItemByVariantId = new Map<string, string>();
+        for (const node of variantsData.nodes) {
+          if (node?.id && node.inventoryItem?.id) {
+            inventoryItemByVariantId.set(node.id, node.inventoryItem.id);
+          }
+        }
+
+        const setQuantities: Array<{
+          inventoryItemId: string;
+          locationId: string;
+          quantity: number;
+        }> = [];
+        for (const variant of variantUpdatesNeedingInventory) {
+          const inventoryItemId = inventoryItemByVariantId.get(variant.id);
+          if (!inventoryItemId) continue;
+          for (const level of variant.inventoryLevels ?? []) {
+            setQuantities.push({
+              inventoryItemId,
+              locationId: level.locationId,
+              quantity: Math.max(0, level.quantity),
+            });
+          }
+        }
+
+        if (setQuantities.length > 0) {
+          const data = await gql<{
+            inventorySetOnHandQuantities: {
+              userErrors: unknown[];
+              inventoryAdjustmentGroup?: unknown;
+            };
+          }>(
+            host,
+            `#graphql
+            mutation SetVariantInventory($input: InventorySetOnHandQuantitiesInput!) {
+              inventorySetOnHandQuantities(input: $input) {
+                userErrors { field message }
+                inventoryAdjustmentGroup { reason changes { name delta } }
+              }
+            }`,
+            {
+              input: {
+                reason: "correction",
+                setQuantities,
+              },
+            },
+          );
+          response.variantInventorySet = data.inventorySetOnHandQuantities;
+        } else {
+          response.variantInventorySet = {
+            userErrors: [
+              {
+                message:
+                  "No inventory items could be resolved for the provided variant IDs.",
+              },
+            ],
+          };
+        }
+      }
+
+      if (input.metadata !== undefined) {
+        didWork = true;
+        const data = await gql<{
+          metafieldsSet: { metafields?: unknown[]; userErrors: unknown[] };
+        }>(
+          host,
+          `#graphql
+          mutation SetProductMetadata($m: [MetafieldsSetInput!]!) {
+            metafieldsSet(metafields: $m) {
+              metafields { id namespace key value type }
+              userErrors { field message }
+            }
+          }`,
+          {
+            m: input.metadata.map(
+              (metafield: {
+                namespace: string;
+                key: string;
+                value: string;
+                type: string;
+              }) => ({
+                ownerId: input.id,
+                namespace: metafield.namespace,
+                key: metafield.key,
+                value: metafield.value,
+                type: metafield.type,
+              }),
+            ),
+          },
+        );
+        response.metadata = data.metafieldsSet;
+      }
+
+      if (!didWork) {
+        return jsonResult({
+          id: input.id,
+          message: "No patch fields were provided; nothing changed.",
+        });
+      }
+
+      return jsonResult(response);
     },
   );
 
