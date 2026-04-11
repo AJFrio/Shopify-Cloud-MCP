@@ -6,6 +6,24 @@ Rather than cloning this repo, follow the [Quick Start steps](https://github.com
 
 Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-react-router) for more details on the React Router app package.
 
+## Deploy to Cloudflare
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/AJFrio/Shopify-Cloud-MCP)
+
+The deploy flow will prompt for required Shopify settings and secrets.
+
+### Required values during deploy
+
+- `SHOPIFY_API_KEY` (Shopify app client ID)
+- `SCOPES` (comma-separated Shopify access scopes)
+- `SHOPIFY_APP_URL` (your Worker URL, for example `https://<worker-name>.<subdomain>.workers.dev`)
+- `SHOPIFY_API_SECRET` (Shopify app client secret)
+- `TOKEN_PEPPER` (a random secret used to hash agent tokens)
+
+Optional:
+
+- `SHOP_CUSTOM_DOMAIN` (for custom shop domains)
+
 ## Upgrading from Remix
 
 If you have an existing Remix app that you want to upgrade to React Router, please follow the [upgrade guide](https://github.com/Shopify/shopify-app-template-react-router/wiki/Upgrading-from-Remix). Otherwise, please follow the quick start guide below.

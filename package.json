@@ -64,6 +64,28 @@
       "extensions/*"
     ]
   },
+  "cloudflare": {
+    "bindings": {
+      "SHOPIFY_API_KEY": {
+        "description": "Your Shopify app client ID (API key) from the Shopify Partners dashboard."
+      },
+      "SHOPIFY_API_SECRET": {
+        "description": "Your Shopify app client secret from the Shopify Partners dashboard."
+      },
+      "SCOPES": {
+        "description": "Comma-separated Shopify API scopes to request (for example `read_products,write_products`)."
+      },
+      "SHOPIFY_APP_URL": {
+        "description": "The production URL of this Worker, for example `https://<worker-name>.<subdomain>.workers.dev`."
+      },
+      "TOKEN_PEPPER": {
+        "description": "Generate a random secret used to hash MCP agent tokens (for example `openssl rand -hex 32`)."
+      },
+      "SHOP_CUSTOM_DOMAIN": {
+        "description": "Optional custom shop domain if your app uses one."
+      }
+    }
+  },
   "trustedDependencies": [
     "@shopify/plugin-cloudflare"
   ],
