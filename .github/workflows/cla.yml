@@ -16,7 +16,12 @@ jobs:
       )
       || (github.event.pull_request && !github.event.pull_request.merged)
     steps:
-      - uses: Shopify/shopify-cla-action@v1
+      - name: Run CLA check
+        if: ${{ secrets.CLA_TOKEN != '' }}
+        uses: Shopify/shopify-cla-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cla-token: ${{ secrets.CLA_TOKEN }}
+      - name: Skip CLA check when secret is missing
+        if: ${{ secrets.CLA_TOKEN == '' }}
+        run: echo "CLA_TOKEN is not configured; skipping CLA enforcement."
