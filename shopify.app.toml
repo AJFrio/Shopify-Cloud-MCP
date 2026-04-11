@@ -1,0 +1,28 @@
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "bad1438b8da0e1cbb0dfef5e0de76661"
+
+name = "Shopify Cloud MCP"
+application_url = "https://shopify-cloud-mcp.frioaj1.workers.dev"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2025-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+
+  [[webhooks.subscriptions]]
+  topics = ["app/scopes_update"]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+# https://shopify.dev/docs/api/usage/access-scopes
+scopes = "read_products,write_products,read_inventory,write_inventory,read_customers,write_customers,read_orders,write_orders,read_all_orders,read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects,read_reports,read_shopify_payments_payouts,read_shopify_payments_disputes"
+
+[auth]
+redirect_urls = [ "https://shopify-cloud-mcp.frioaj1.workers.dev/auth/callback" ]

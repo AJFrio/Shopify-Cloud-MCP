@@ -1,0 +1,49 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"account_id": "45fd51d9ee916510a47194a58b75e07a",
+	"name": "shopify-cloud-mcp",
+	"main": "./workers/app.ts",
+	"compatibility_date": "2025-10-08",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"vars": {
+		"SHOPIFY_API_KEY": "bad1438b8da0e1cbb0dfef5e0de76661",
+		"SHOPIFY_APP_URL": "https://shopify-cloud-mcp.frioaj1.workers.dev",
+		"SCOPES": "read_products,write_products,read_inventory,write_inventory,read_customers,write_customers,read_orders,write_orders,read_all_orders,read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects,read_reports,read_shopify_payments_payouts,read_shopify_payments_disputes"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "7b0de15f845d4e0cb8f1e04950646a8e"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "shopify-mcp-db",
+			"database_id": "604b83cc-f79e-467a-93ce-14fe87e8f12f",
+			"migrations_dir": "d1/migrations"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "MCP_AGENT",
+				"class_name": "ShopMcp"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"ShopMcp"
+			]
+		}
+	]
+}

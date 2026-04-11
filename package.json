@@ -1,0 +1,73 @@
+{
+  "name": "shopify-cloud-mcp",
+  "private": true,
+  "scripts": {
+    "build": "react-router build",
+    "dev": "shopify app dev",
+    "dev:wrangler": "react-router dev",
+    "deploy": "npm run build && wrangler deploy",
+    "config:link": "shopify app config link",
+    "generate": "shopify app generate",
+    "config:use": "shopify app config use",
+    "env": "shopify app env",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "shopify": "shopify",
+    "graphql-codegen": "graphql-codegen",
+    "vite": "vite",
+    "typecheck": "react-router typegen && tsc --noEmit",
+    "cf-typegen": "wrangler types && react-router typegen",
+    "cloudflare:ensure-resources": "node scripts/ensure-cloudflare-resources.mjs"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  },
+  "dependencies": {
+    "@react-router/fs-routes": "^7.14.0",
+    "@shopify/app-bridge-react": "^4.2.4",
+    "@shopify/shopify-app-react-router": "^1.2.0",
+    "@shopify/shopify-app-session-storage-kv": "^6.0.0",
+    "agents": "^0.10.1",
+    "isbot": "^5.1.31",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.14.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260411.1",
+    "@cloudflare/vite-plugin": "^1.15.3",
+    "@react-router/dev": "^7.14.0",
+    "@shopify/api-codegen-preset": "^1.2.0",
+    "@shopify/polaris-types": "1.0.1",
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^22.18.8",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "graphql-config": "^5.1.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.6",
+    "wrangler": "^4.56.0"
+  },
+  "workspaces": {
+    "packages": [
+      "extensions/*"
+    ]
+  },
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "overrides": {
+    "p-map": "^4.0.0"
+  }
+}
