@@ -1,0 +1,2 @@
+SHOPIFY_API_SECRET=replace-with-your-shopify-app-client-secret
+TOKEN_PEPPER=replace-with-a-random-secret-string
