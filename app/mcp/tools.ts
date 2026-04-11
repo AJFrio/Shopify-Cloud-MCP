@@ -252,10 +252,11 @@ export function registerShopifyTools(
         response.productUpdate = data.productUpdate;
       }
 
-      if ((input.collections?.add?.length ?? 0) > 0) {
+      const collectionsToAdd = input.collections?.add ?? [];
+      if (collectionsToAdd.length > 0) {
         didWork = true;
         const addResults = [];
-        for (const collectionId of input.collections.add) {
+        for (const collectionId of collectionsToAdd) {
           const data = await gql<{
             collectionAddProducts: { userErrors: unknown[] };
           }>(
@@ -273,10 +274,11 @@ export function registerShopifyTools(
         response.collectionsAdded = addResults;
       }
 
-      if ((input.collections?.remove?.length ?? 0) > 0) {
+      const collectionsToRemove = input.collections?.remove ?? [];
+      if (collectionsToRemove.length > 0) {
         didWork = true;
         const removeResults = [];
-        for (const collectionId of input.collections.remove) {
+        for (const collectionId of collectionsToRemove) {
           const data = await gql<{
             collectionRemoveProducts: { userErrors: unknown[] };
           }>(
@@ -294,9 +296,10 @@ export function registerShopifyTools(
         response.collectionsRemoved = removeResults;
       }
 
-      if ((input.variants?.create?.length ?? 0) > 0) {
+      const variantsToCreate = input.variants?.create ?? [];
+      if (variantsToCreate.length > 0) {
         didWork = true;
-        const variants = input.variants.create.map(
+        const variants = variantsToCreate.map(
           (variant: {
             optionValues?: { optionName: string; name: string }[];
             price?: string;
@@ -307,8 +310,9 @@ export function registerShopifyTools(
               payload.optionValues = variant.optionValues;
             }
             if (variant.price !== undefined) payload.price = variant.price;
-            if ((variant.inventoryLevels?.length ?? 0) > 0) {
-              payload.inventoryQuantities = variant.inventoryLevels.map(
+            const inventoryLevels = variant.inventoryLevels ?? [];
+            if (inventoryLevels.length > 0) {
+              payload.inventoryQuantities = inventoryLevels.map(
                 (inventoryLevel) => ({
                   locationId: inventoryLevel.locationId,
                   availableQuantity: Math.max(0, inventoryLevel.quantity),
@@ -337,12 +341,13 @@ export function registerShopifyTools(
         response.variantsCreated = data.productVariantsBulkCreate;
       }
 
-      const variantUpdatesNeedingInventory = input.variants?.update?.filter(
+      const variantUpdates = input.variants?.update ?? [];
+      const variantUpdatesNeedingInventory = variantUpdates.filter(
         (variant: { inventoryLevels?: unknown[] }) =>
           (variant.inventoryLevels?.length ?? 0) > 0,
       );
-      const variantPriceUpdates = input.variants?.update
-        ?.map((variant: { id: string; price?: string }) => {
+      const variantPriceUpdates = variantUpdates
+        .map((variant: { id: string; price?: string }) => {
           const payload: Record<string, unknown> = { id: variant.id };
           if (variant.price !== undefined) payload.price = variant.price;
           return payload;
@@ -370,7 +375,7 @@ export function registerShopifyTools(
         response.variantsUpdated = data.productVariantsBulkUpdate;
       }
 
-      if ((variantUpdatesNeedingInventory?.length ?? 0) > 0) {
+      if (variantUpdatesNeedingInventory.length > 0) {
         didWork = true;
         const variantIds = variantUpdatesNeedingInventory.map(
           (variant: { id: string }) => variant.id,
