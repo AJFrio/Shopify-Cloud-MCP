@@ -62,7 +62,7 @@ module.exports = {
         "import/internal-regex": "^~/",
         "import/resolver": {
           node: {
-            extensions: [".ts", ".tsx"],
+            extensions: [".js", ".jsx", ".ts", ".tsx", ".d.ts"],
           },
           typescript: {
             alwaysTryTypes: true,
@@ -74,6 +74,12 @@ module.exports = {
         "plugin:import/recommended",
         "plugin:import/typescript",
       ],
+      rules: {
+        "import/no-unresolved": [
+          "error",
+          { ignore: ["^virtual:", "^@modelcontextprotocol/sdk/"] },
+        ],
+      },
     },
 
     // Node
