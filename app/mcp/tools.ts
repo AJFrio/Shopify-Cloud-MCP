@@ -92,7 +92,36 @@ export function registerShopifyTools(
         query Products($first: Int!, $after: String) {
           products(first: $first, after: $after) {
             pageInfo { hasNextPage endCursor }
-            edges { node { id title handle status totalInventory } }
+            edges {
+              node {
+                id
+                title
+                handle
+                status
+                totalInventory
+                options {
+                  id
+                  name
+                  values
+                }
+                variants(first: 50) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      barcode
+                      price
+                      compareAtPrice
+                      selectedOptions {
+                        name
+                        value
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }`,
         { first, after: after ?? null },
