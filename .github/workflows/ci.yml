@@ -24,7 +24,13 @@ jobs:
           version: 8
 
       - name: Install dependencies using ${{ matrix.manager }}
-        run: ${{ matrix.manager }} install
+        shell: bash
+        run: |
+          if [ "${{ matrix.manager }}" = "pnpm" ]; then
+            pnpm install --dangerously-allow-all-builds
+          else
+            ${{ matrix.manager }} install
+          fi
 
       - name: Run TypeScript type checking
         if: ${{ !startsWith(github.head_ref || github.ref_name, 'javascript') }}
