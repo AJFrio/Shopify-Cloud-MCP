@@ -23,6 +23,7 @@
     "node": ">=20.19 <22 || >=22.12"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@react-router/fs-routes": "^7.14.0",
     "@shopify/app-bridge-react": "^4.2.4",
     "@shopify/shopify-app-react-router": "^1.2.0",
@@ -36,8 +37,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260411.1",
     "@cloudflare/vite-plugin": "^1.15.3",
+    "@cloudflare/workers-types": "^4.20260411.1",
     "@react-router/dev": "^7.14.0",
     "@shopify/api-codegen-preset": "^1.2.0",
     "@shopify/polaris-types": "1.0.1",
