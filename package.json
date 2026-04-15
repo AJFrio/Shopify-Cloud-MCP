@@ -91,5 +91,8 @@
   ],
   "overrides": {
     "p-map": "^4.0.0"
+  },
+  "pnpm": {
+    "dangerouslyAllowAllBuilds": true
   }
 }
