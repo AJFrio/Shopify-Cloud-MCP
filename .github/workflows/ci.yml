@@ -19,18 +19,12 @@ jobs:
 
       - name: Install pnpm
         if: ${{ matrix.manager == 'pnpm' }}
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
-          version: 8
+          version: 9.15.9
 
       - name: Install dependencies using ${{ matrix.manager }}
-        shell: bash
-        run: |
-          if [ "${{ matrix.manager }}" = "pnpm" ]; then
-            pnpm install --dangerously-allow-all-builds
-          else
-            ${{ matrix.manager }} install
-          fi
+        run: ${{ matrix.manager }} install
 
       - name: Run TypeScript type checking
         if: ${{ !startsWith(github.head_ref || github.ref_name, 'javascript') }}
