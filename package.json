@@ -33,7 +33,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.14.0",
-    "vite-tsconfig-paths": "^5.1.4",
+    "vite-tsconfig-paths": "^6.1.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "graphql-config": "^5.1.1",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "vite": "^6.3.6",
+    "vite": "^8.0.3",
     "wrangler": "^4.56.0"
   },
   "workspaces": {
