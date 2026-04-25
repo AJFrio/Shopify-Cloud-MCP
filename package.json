@@ -41,7 +41,7 @@
     "@cloudflare/workers-types": "^4.20260411.1",
     "@react-router/dev": "^7.14.0",
     "@shopify/api-codegen-preset": "^1.2.0",
-    "@shopify/polaris-types": "1.0.1",
+    "@shopify/polaris-types": "1.0.5",
     "@types/eslint": "^9.6.1",
     "@types/node": "^22.18.8",
     "@types/react": "^19.0.0",
